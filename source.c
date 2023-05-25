@@ -49,8 +49,9 @@ void displaySubmenuChangeMasterPassword() {
 
 void displaySubmenuHelp() {
     printf("----- Podmeni - Pomoc -----\n");
-    printf("1. Upute koristenja\n");
-    printf("0. Povratak na glavni izbornik\n");
+    printf("1. Opis programa\n");
+    printf("2. Upute koristenja\n");
+    printf("0. Povratak na glavni izbornik");
     printf("----------------------------\n");
 }
 
@@ -85,7 +86,20 @@ int main() {
             displaySubmenuAddPassword();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
-            
+            switch (subChoice) {
+            case 1:
+                addPassword();
+                break;
+            case 2:
+               
+                break;
+            case 0:
+                
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
             break;
         case 3:
             printf("Random generiranje sifri\n");
@@ -120,6 +134,20 @@ int main() {
             displaySubmenuHelp();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
+            switch (subChoice) {
+            case 1:
+                displayDescription();
+                break;
+            case 2:
+                displayInstructions();
+                break;
+            case 0:
+
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
            
             break;
         case 0:
@@ -134,5 +162,4 @@ int main() {
 
     return 0;
 }
-
 
