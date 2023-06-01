@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "header.h"
 
+
 void displaySubmenuViewPasswords() {
     printf("----- Podmeni - Pregled sifri -----\n");
     printf("1. Ispis svih spremljenih sifri\n");
@@ -13,7 +14,6 @@ void displaySubmenuViewPasswords() {
 void displaySubmenuAddPassword() {
     printf("----- Podmeni - Dodavanje sifri -----\n");
     printf("1. Unos novog korisnickog racuna\n");
-    printf("2. Unos dodatnih informacija o racunu\n");
     printf("0. Povratak na glavni izbornik\n");
     printf("--------------------------------------\n");
 }
@@ -42,7 +42,7 @@ void displaySubmenuDeletePassword() {
 
 void displaySubmenuChangeMasterPassword() {
     printf("----- Podmeni - Mijenjanje master sifre -----\n");
-    printf("1. Promjena glavne lozinke za pristup\n");
+    printf("1. Promjena master sifre\n");
     printf("0. Povratak na glavni izbornik\n");
     printf("---------------------------------------------\n");
 }
@@ -56,6 +56,9 @@ void displaySubmenuHelp() {
 }
 
 int main() {
+    requestMasterPassword();
+    PASSWORD passwords[MAX_PASSWORDS];
+    int numPasswords = 0;
     int choice;
     int subChoice;
 
@@ -79,6 +82,26 @@ int main() {
             displaySubmenuViewPasswords();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
+            switch(subChoice){
+        case 1:
+            displayPasswords(passwords, numPasswords);
+            break;
+        case 2:
+        {
+            char username[100];
+            printf("Unesite korisnicko ime: ");
+            scanf("%s", username);
+            findPassUsername(passwords, numPasswords, username);
+            }
+            break;
+        case 0:
+
+            break;
+        default:
+            printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+            break;
+        }
+        break;
             
             break;
         case 2:
@@ -88,10 +111,10 @@ int main() {
             scanf("%d", &subChoice);
             switch (subChoice) {
             case 1:
-                addPassword();
+                addPassword(passwords, &numPasswords);
                 break;
             case 2:
-               
+                
                 break;
             case 0:
                 
@@ -113,6 +136,20 @@ int main() {
             displaySubmenuEditPassword();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
+            switch (subChoice) {
+            case 1:
+                editPassword(passwords, numPasswords);
+                break;
+            case 2:
+
+                break;
+            case 0:
+
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
           
             break;
         case 5:
@@ -127,6 +164,18 @@ int main() {
             displaySubmenuChangeMasterPassword();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
+            switch (subChoice) {
+            case 1:
+                changeMasterPassword();
+                break;
+            case 0:
+
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
+            break;
            
             break;
         case 7:
