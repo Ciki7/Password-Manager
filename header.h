@@ -4,6 +4,7 @@
 #define MAX_PASSWORDS 100
 #define FILENAME "passwords.txt"
 #define MASTER_PASSWORD_LENGTH 100
+#define MAX_PASSWORD_LENGTH 100
 #define MASTER_PASSWORD_FILE "master_password.txt"
 
 typedef struct {
@@ -29,7 +30,10 @@ int isMasterPasswordSet();
 void setMasterPassword(const char* password);
 void changeMasterPassword();
 void findPassUsername(const PASSWORD passwords[], int numPasswords, const char* username);
-
+void generateRandomPassword();
+void generatePasswordWithOptions();
+void deletePassword(PASSWORD passwords[], int* numPasswords);
+void deleteMasterPassword();
 
 
 #endif  // HEADER_H
