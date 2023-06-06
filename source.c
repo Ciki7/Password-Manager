@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "header.h"
 
-
 void displaySubmenuViewPasswords() {
     printf("----- Podmeni - Pregled sifri -----\n");
     printf("1. Ispis svih spremljenih sifri\n");
@@ -16,14 +15,6 @@ void displaySubmenuAddPassword() {
     printf("1. Unos novog korisnickog racuna\n");
     printf("0. Povratak na glavni izbornik\n");
     printf("--------------------------------------\n");
-}
-
-void displaySubmenuGeneratePassword() {
-    printf("----- Podmeni - Random generiranje sifri -----\n");
-    printf("1. Generiranje nasumicne lozinke\n");
-    printf("2. Postavljanje parametara za generiranje\n");
-    printf("0. Povratak na glavni izbornik\n");
-    printf("----------------------------------------------\n");
 }
 
 void displaySubmenuEditPassword() {
@@ -51,7 +42,7 @@ void displaySubmenuHelp() {
     printf("----- Podmeni - Pomoc -----\n");
     printf("1. Opis programa\n");
     printf("2. Upute koristenja\n");
-    printf("0. Povratak na glavni izbornik");
+    printf("0. Povratak na glavni izbornik\n");
     printf("----------------------------\n");
 }
 
@@ -66,11 +57,10 @@ int main() {
         printf("=========== Password Manager ===========\n");
         printf("1. Pregled sifri\n");
         printf("2. Dodavanje sifri\n");
-        printf("3. Random generiranje sifri\n");
-        printf("4. Uredivanje sifri\n");
-        printf("5. Brisanje sifri\n");
-        printf("6. Mijenjanje master sifre\n");
-        printf("7. Pomoc\n");
+        printf("3. Uredivanje sifri\n");
+        printf("4. Brisanje sifri\n");
+        printf("5. Mijenjanje master sifre\n");
+        printf("6. Pomoc\n");
         printf("0. Izlaz\n");
         printf("========================================\n");
         printf("Vas izbor: ");
@@ -82,27 +72,23 @@ int main() {
             displaySubmenuViewPasswords();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
-            switch(subChoice){
-        case 1:
-            displayPasswords(passwords, numPasswords);
-            break;
-        case 2:
-        {
-            char username[100];
-            printf("Unesite korisnicko ime: ");
-            scanf("%s", username);
-            findPassUsername(passwords, numPasswords, username);
+            switch (subChoice) {
+            case 1:
+                displayPasswords(passwords, numPasswords);
+                break;
+            case 2: {
+                char username[100];
+                printf("Unesite korisnicko ime: ");
+                scanf("%s", username);
+                findPassUsername(passwords, numPasswords, username);
+                break;
             }
-            break;
-        case 0:
-
-            break;
-        default:
-            printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
-            break;
-        }
-        break;
-            
+            case 0:
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
             break;
         case 2:
             printf("Dodavanje sifri\n");
@@ -113,11 +99,7 @@ int main() {
             case 1:
                 addPassword(passwords, &numPasswords);
                 break;
-            case 2:
-                
-                break;
             case 0:
-                
                 break;
             default:
                 printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
@@ -125,13 +107,6 @@ int main() {
             }
             break;
         case 3:
-            printf("Random generiranje sifri\n");
-            displaySubmenuGeneratePassword();
-            printf("Unesite podizbor: ");
-            scanf("%d", &subChoice);
-            
-            break;
-        case 4:
             printf("Uredivanje sifri\n");
             displaySubmenuEditPassword();
             printf("Unesite podizbor: ");
@@ -140,26 +115,30 @@ int main() {
             case 1:
                 editPassword(passwords, numPasswords);
                 break;
-            case 2:
-
-                break;
             case 0:
-
                 break;
             default:
                 printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
                 break;
             }
-          
             break;
-        case 5:
+        case 4:
             printf("Brisanje sifri\n");
             displaySubmenuDeletePassword();
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
-            
+            switch (subChoice) {
+            case 1:
+                deletePassword(passwords, &numPasswords);
+                break;
+            case 0:
+                break;
+            default:
+                printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
+                break;
+            }
             break;
-        case 6:
+        case 5:
             printf("Mijenjanje master sifre\n");
             displaySubmenuChangeMasterPassword();
             printf("Unesite podizbor: ");
@@ -169,16 +148,13 @@ int main() {
                 changeMasterPassword();
                 break;
             case 0:
-
                 break;
             default:
                 printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
                 break;
             }
             break;
-           
-            break;
-        case 7:
+        case 6:
             printf("Pomoc\n");
             displaySubmenuHelp();
             printf("Unesite podizbor: ");
@@ -191,13 +167,11 @@ int main() {
                 displayInstructions();
                 break;
             case 0:
-
                 break;
             default:
                 printf("Nepoznata opcija. Molimo odaberite ponovno.\n");
                 break;
             }
-           
             break;
         case 0:
             printf("Izlaz\n");
@@ -211,4 +185,3 @@ int main() {
 
     return 0;
 }
-
