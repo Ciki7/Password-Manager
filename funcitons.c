@@ -1,8 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "header.h"
+
+
 
 void displayDescription() {
     printf("\n=== Password Manager ===\n");
@@ -22,43 +25,44 @@ void displayInstructions() {
     printf("6. Mijenjanje master sifre: Omogucuje promjenu glavne lozinke za pristup programu.\n");
     printf("7. Pomoc: Prikazuje ovaj izbornik s uputama.\n");
     printf("0. Izlaz: Izlazi iz programa.\n");
+    printf("SIFRE OBAVEZNO MORAJU SADRZAVATI MALO SLOVO; VELIKO SLOVO, BROJ I ZNAK.\n");
     printf("===================================\n");
 }
 
-void addPassword(PASSWORD** passwords, int* numPasswords) {
-    if (*numPasswords == MAX_PASSWORDS) {
-        printf("Baza sifri je puna. Nije moguce dodati sifru.\n");
+
+void addPassword(PASSWORD passwords[], int* numPasswords) {
+    char* username = (char*)malloc(100 * sizeof(char));
+    char* password = (char*)malloc(100 * sizeof(char));
+
+    if (username == NULL || password == NULL) {
+        printf("Greska: Neispravni parametri.\n");
+        free(username);
+        free(password);
         return;
     }
 
-    PASSWORD* newPassword = (PASSWORD*)malloc(sizeof(PASSWORD));
-    if (newPassword == NULL) {
-        printf("Nije moguće alocirati memoriju za novu lozinku.\n");
-        return;
-    }
-
-    printf("Unesite username: ");
-    scanf("%s", newPassword->username);
+    printf("Unesite korisnicko ime: ");
+    scanf("%s", username);
 
     int validPassword = 0;
 
     while (!validPassword) {
         printf("Unesite sifru: ");
-        scanf("%s", newPassword->password);
+        scanf("%s", password);
 
         int hasUppercase = 0;
         int hasLowercase = 0;
         int hasDigit = 0;
         int hasSymbol = 0;
 
-        for (int i = 0; newPassword->password[i] != '\0'; i++) {
-            if (isupper(newPassword->password[i])) {
+        for (int i = 0; password[i] != '\0'; i++) {
+            if (isupper(password[i])) {
                 hasUppercase = 1;
             }
-            else if (islower(newPassword->password[i])) {
+            else if (islower(password[i])) {
                 hasLowercase = 1;
             }
-            else if (isdigit(newPassword->password[i])) {
+            else if (isdigit(password[i])) {
                 hasDigit = 1;
             }
             else {
@@ -70,38 +74,31 @@ void addPassword(PASSWORD** passwords, int* numPasswords) {
             validPassword = 1;
         }
         else {
-            printf("Sifra ne zadovoljava uvjete: malo slovo, veliko slovo, broj i znak. Pokusajte ponovno\n");
+            printf("Sifra ne zadovoljava uvjete: malo slovo, veliko slovo, broj i znak. Pokusajte ponovno.\n");
         }
     }
 
-    *passwords = (PASSWORD*)realloc(*passwords, (*numPasswords + 1) * sizeof(PASSWORD));
-    if (*passwords == NULL) {
-        printf("Nije moguće alocirati memoriju za spremanje nove lozinke.\n");
-        free(newPassword);
-        return;
-    }
-
-    (*passwords)[*numPasswords] = *newPassword;
-    (*numPasswords)++;
-
     FILE* file = fopen("passwords.txt", "a");
     if (file == NULL) {
-        printf("Nije moguce otvoriti datoteku za pisanje.\n");
-        free(newPassword);
+        fprintf(stderr, "Greska pri otvaranju datoteke: %s\n", strerror(errno));
+        free(username);
+        free(password);
         return;
     }
 
-    fprintf(file, "%s %s\n", newPassword->username, newPassword->password);
+    fprintf(file, "%s %s\n", username, password);
     fclose(file);
 
-    printf("Sifra uspjesno dodana\n");
-    free(newPassword);
+    printf("Sifra uspjesno dodana.\n");
+
+    free(username);
+    free(password);
 }
 
 void savePasswords(const PASSWORD* passwords, int numPasswords) {
     FILE* file = fopen("passwords.txt", "w");
     if (file == NULL) {
-        printf("Greska pri otvaranju datoteke.\n");
+        perror("Greska pri otvaranju datoteke\n");
         return;
     }
 
@@ -121,116 +118,149 @@ void displayPasswords() {
         return;
     }
 
+    fseek(file, 0, SEEK_END);
+
+    long size = ftell(file);
+
+    fseek(file, 0, SEEK_SET);
+
+    PASSWORD* passwords = NULL;
+    int numPasswords = 0;
     PASSWORD password;
-    printf("Spremljene lozinke:\n");
+
     while (fscanf(file, "%s %s", password.username, password.password) == 2) {
-        printf("Korisnicko ime: %s\n", password.username);
-        printf("Lozinka: %s\n", password.password);
+        passwords = realloc(passwords, (numPasswords + 1) * sizeof(PASSWORD));
+        passwords[numPasswords] = password;
+        numPasswords++;
+    }
+
+    fclose(file);
+
+    qsort(passwords, numPasswords, sizeof(PASSWORD), comparePasswords);
+
+    printf("Spremljene lozinke:\n");
+    for (int i = 0; i < numPasswords; i++) {
+        printf("Korisnicko ime: %s\n", passwords[i].username);
+        printf("Lozinka: %s\n", passwords[i].password);
         printf("------------------------------\n");
     }
 
-    fclose(file);
+    free(passwords);
 }
-
-void findPassUsername(const PASSWORD* passwords, int numPasswords, const char* username) {
-    int found = 0;
-
-    for (int i = 0; i < numPasswords; i++) {
-        if (strcmp(passwords[i].username, username) == 0) {
-            printf("Korisnicko ime: %s, Lozinka: %s\n", passwords[i].username, passwords[i].password);
-            found = 1;
-        }
-    }
-
-    if (!found) {
-        printf("Sifra s korisnickim imenom '%s' nije pronadena.\n", username);
-    }
-}
-
-void loadPasswords(PASSWORD** passwords, int* numPasswords) {
+void searchPasswords(const char* username) {
     FILE* file = fopen("passwords.txt", "r");
     if (file == NULL) {
-        printf("Nije moguce otvoriti datoteku za čitanje.\n");
+        printf("Nije moguce otvoriti datoteku za citanje.\n");
         return;
     }
-
-    *numPasswords = 0;
-    PASSWORD* loadedPasswords = NULL;
+   
     PASSWORD password;
+    int found = 0;
 
-    while (*numPasswords < MAX_PASSWORDS && fscanf(file, "%s %s", password.username, password.password) == 2) {
-        loadedPasswords = (PASSWORD*)realloc(loadedPasswords, (*numPasswords + 1) * sizeof(PASSWORD));
-        if (loadedPasswords == NULL) {
-            printf("Nije moguće alocirati memoriju za učitavanje lozinki.\n");
-            fclose(file);
-            return;
+    while (fscanf(file, "%s %s", password.username, password.password) == 2) {
+        if (strcmp(password.username, username) == 0) {
+            printf("Korisnicko ime: %s, Lozinka: %s\n", password.username, password.password);
+            found = 1;
+            break;
         }
-
-        loadedPasswords[*numPasswords] = password;
-        (*numPasswords)++;
     }
 
     fclose(file);
-    *passwords = loadedPasswords;
+
+    if (!found) {
+        printf("Lozinka s korisnickim imenom '%s' nije pronadena.\n", username);
+    }
 }
 
-void editPassword(PASSWORD** passwords, int* numPasswords) {
-    loadPasswords(passwords, numPasswords);
-
-    if (*numPasswords == 0) {
-        printf("Nema spremljenih sifri.\n");
+void editPassword(const char* filename) {
+    FILE* file = fopen(filename, "r+");
+    if (file == NULL) {
+        printf("Nije moguce otvoriti datoteku za citanje i pisanje.\n");
         return;
     }
 
     char username[100];
-    int nadenIndex = -1;
+    printf("Unesite korisnicko ime za uredivanje: ");
+    scanf(" %99[^\n]", username);
 
-    while (nadenIndex == -1) {
-        printf("Unesite korisnicko ime za uredivanje: ");
-        scanf("%s", username);
+    PASSWORD password;
+    int found = 0;
 
-        for (int i = 0; i < *numPasswords; i++) {
-            if (strcmp((*passwords)[i].username, username) == 0) {
-                nadenIndex = i;
-                break;
+    FILE* tempFile = fopen("temp.txt", "w");
+    if (tempFile == NULL) {
+        printf("Nije moguce otvoriti privremenu datoteku za pisanje.\n");
+        fclose(file);
+        return;
+    }
+
+    char newPassword[100];
+    printf("Unesite novu lozinku: ");
+    scanf(" %99s", newPassword);
+
+    while (fscanf(file, "%s %s", password.username, password.password) == 2) {
+        if (strcmp(password.username, username) == 0) {
+            int validPassword = 0;
+
+            while (!validPassword) {
+                if (strcmp(newPassword, password.password) == 0) {
+                    printf("Nova lozinka ne smije biti ista kao stara lozinka.\n");
+                }
+                else if (!validatePassword(newPassword)) {
+                    printf("Nova lozinka ne zadovoljava uvjete (malo slovo, veliko slovo, broj, znak). Molimo unesite ponovno: ");
+                    scanf(" %99s", newPassword);
+                }
+                else {
+                    validPassword = 1;
+                }
             }
-        }
 
-        if (nadenIndex == -1) {
-            printf("Sifra s korisnickim imenom '%s' nije pronadena.\n", username);
+            fprintf(tempFile, "%s %s\n", password.username, newPassword);
+            found = 1;
+
+            free(password.password);
+        }
+        else {
+            fprintf(tempFile, "%s %s\n", password.username, password.password);
         }
     }
 
-    printf("Unesite novu lozinku: ");
-    scanf("%s", (*passwords)[nadenIndex].password);
+    fclose(file);
+    fclose(tempFile);
 
-    savePasswords(*passwords, *numPasswords);
+    remove(filename);
+    rename("temp.txt", filename);
 
-    printf("Lozinka uspjesno uredena i spremljena.\n");
+    if (found) {
+        printf("Lozinka uspjesno uredena.\n");
+    }
+    else {
+        printf("Sifra s korisnickim imenom '%s' nije pronadena.\n", username);
+    }
 }
-
 void requestMasterPassword() {
     if (!isMasterPasswordSet()) {
         char password[MASTER_PASSWORD_LENGTH];
         printf("Ne postoji master sifra. Molimo odaberite master sifru: ");
-        scanf("%s", password);
+        fgets(password, sizeof(password), stdin);
+        password[strcspn(password, "\n")] = '\0';  
         setMasterPassword(password);
         printf("Master sifra uspjesno dodana.\n");
     }
     else {
         char password[MASTER_PASSWORD_LENGTH];
-        printf("Enter master password: ");
-        scanf("%s", password);
+        printf("Unesite master sifru: ");
+        fgets(password, sizeof(password), stdin);
+        password[strcspn(password, "\n")] = '\0';  
 
         if (validateMasterPassword(password)) {
-            printf("Master sifra tocno unesena, pristup odobren.\n");
+            printf("Pristup odobren.\n");
         }
         else {
-            printf("Master sifra krivo unesena, odbijen pristup..\n");
-            exit(1);
+            printf("Pristup odbijen.\n");
         }
     }
 }
+
 
 int isMasterPasswordSet() {
     FILE* file = fopen(MASTER_PASSWORD_FILE, "r");
@@ -266,7 +296,7 @@ int validateMasterPassword(const char* password) {
 
 void changeMasterPassword() {
     if (!isMasterPasswordSet()) {
-        printf("Master sifra ne postoji. Odaberite master sifru:.\n");
+        printf("Master sifra ne postoji. Odaberite master sifru:\n");
         return;
     }
 
@@ -274,139 +304,102 @@ void changeMasterPassword() {
     printf("Unesite trenutnu master sifru: ");
     scanf("%s", currentPassword);
 
-    if (validateMasterPassword(currentPassword)) {
-        char newPassword[MASTER_PASSWORD_LENGTH];
+    if (!validateMasterPassword(currentPassword)) {
+        printf("Trenutna master sifra nije tocna. Promjena sifre nije moguca.\n");
+        return;
+    }
+
+    char newPassword[MASTER_PASSWORD_LENGTH];
+    char confirmPassword[MASTER_PASSWORD_LENGTH];
+
+    while (1) {
         printf("Unesite novu master sifru: ");
         scanf("%s", newPassword);
+
+        if (strcmp(currentPassword, newPassword) == 0) {
+            printf("Nova sifra mora biti razlicita od trenutne sifre. Molimo unesite ponovno.\n");
+            continue;
+        }
+
+        if (!validatePassword(newPassword)) {
+            printf("Nova sifra ne zadovoljava uvjete (malo, veliko slovo, broj, znak). Molimo unesite ponovno.\n");
+            continue;
+        }
+
+        printf("Potvrdite novu master sifru: ");
+        scanf("%s", confirmPassword);
+
+        if (strcmp(newPassword, confirmPassword) != 0) {
+            printf("Sifre se ne podudaraju. Molimo unesite ponovno.\n");
+            continue;
+        }
+
+        
         setMasterPassword(newPassword);
         printf("Master sifra uspjesno promijenjena.\n");
-    }
-    else {
-        printf("Trenutna master sifra nije tocna. Promjena sifre nije moguca.\n");
+        break;
     }
 }
-
-void deletePassword(PASSWORD passwords[], int* numPasswords) {
-    if (*numPasswords == 0) {
-        printf("Nema sifri za brisanje.\n");
+void deletePassword(const char* username) {
+    FILE* file = fopen("passwords.txt", "r");
+    if (file == NULL) {
+        printf("Nije moguce otvoriti datoteku za citanje.\n");
         return;
     }
 
-    char username[100];
-    printf("Unesite korisnicko ime sifre koju zelite izbrisati: ");
-    scanf("%s", username);
-
-    int i;
-    for (i = 0; i < *numPasswords; i++) {
-        if (strcmp(passwords[i].username, username) == 0) {
-            
-            break;
-        }
-    }
-
-    if (i == *numPasswords) {
-        printf("Nije pronadjena sifra sa zadanim korisnickim imenom.\n");
+    FILE* tempFile = fopen("temp.txt", "w");
+    if (tempFile == NULL) {
+        printf("Nije moguce otvoriti privremenu datoteku za pisanje.\n");
+        fclose(file);
         return;
     }
 
-  
-    for (int j = i; j < *numPasswords - 1; j++) {
-        strcpy(passwords[j].username, passwords[j + 1].username);
-        strcpy(passwords[j].password, passwords[j + 1].password);
+    PASSWORD password; 
+    int found = 0;
+
+    while (fscanf(file, "%s %s", password.username, password.password) == 2) {
+        if (strcmp(password.username, username) == 0) {
+            found = 1;
+            continue;
+        }
+        fprintf(tempFile, "%s %s\n", password.username, password.password);
     }
 
-    (*numPasswords)--;
-    printf("Sifra je uspjesno izbrisana.\n");
-}
+    fclose(file);
+    fclose(tempFile);
 
-
-void generateRandomPassword() {
-    int length;
-    printf("Unesite duljinu lozinke: ");
-    scanf("%d", &length);
-
-    char password[MAX_PASSWORD_LENGTH + 1];
-    for (int i = 0; i < length; i++) {
-        int type = rand() % 4;
-        if (type == 0) {
-            password[i] = 'a' + rand() % 26;
-        }
-        else if (type == 1) {
-            password[i] = 'A' + rand() % 26;
-        }
-        else if (type == 2) {
-            password[i] = '0' + rand() % 10;
-        }
-        else {
-            const char symbols[] = "!@#$%^&*()";
-            password[i] = symbols[rand() % strlen(symbols)];
-        }
-    }
-
-    password[length] = '\0';
-    printf("Generirana lozinka: %s\n", password);
-}
-
-void generatePasswordWithOptions() {
-    int length;
-    printf("Unesite duljinu lozinke: ");
-    scanf("%d", &length);
-
-    int useUppercase;
-    printf("Koristiti velika slova (1-da, 0-ne): ");
-    scanf("%d", &useUppercase);
-
-    int useLowercase;
-    printf("Koristiti mala slova (1-da, 0-ne): ");
-    scanf("%d", &useLowercase);
-
-    int useDigits;
-    printf("Koristiti brojeve (1-da, 0-ne): ");
-    scanf("%d", &useDigits);
-
-    int useSymbols;
-    printf("Koristiti znakove (1-da, 0-ne): ");
-    scanf("%d", &useSymbols);
-
-    char password[MAX_PASSWORD_LENGTH + 1];
-    int index = 0;
-
-    while (index < length) {
-        if (useUppercase && index < length) {
-            password[index++] = 'A' + rand() % 26;
-        }
-
-        if (useLowercase && index < length) {
-            password[index++] = 'a' + rand() % 26;
-        }
-
-        if (useDigits && index < length) {
-            password[index++] = '0' + rand() % 10;
-        }
-
-        if (useSymbols && index < length) {
-            const char symbols[] = "!@#$%^&*()";
-            password[index++] = symbols[rand() % strlen(symbols)];
-        }
-    }
-
-    password[length] = '\0';
-
-    for (int i = 0; i < length - 1; i++) {
-        int j = rand() % (length - i) + i;
-        char temp = password[i];
-        password[i] = password[j];
-        password[j] = temp;
-    }
-
-    printf("Generirana lozinka: %s\n", password);
-}
-
-void deleteMasterPassword() {
-    if (remove(MASTER_PASSWORD_FILE) == 0) {
-        printf("Master password successfully deleted.\n");
+    if (!found) {
+        printf("Lozinka s korisnickim imenom '%s' nije pronadena.\n", username);
+        remove("temp.txt");
     }
     else {
-        printf("Failed to delete master password.\n");
+        remove("passwords.txt");
+        rename("temp.txt", "passwords.txt");
+        printf("Lozinka uspjesno obrisana.\n");
     }
+}
+int validatePassword(const char* password) {
+    int hasUppercase = 0;
+    int hasLowercase = 0;
+    int hasDigit = 0;
+    int hasSpecialChar = 0;
+
+    for (int i = 0; password[i] != '\0'; i++) {
+        if (isupper(password[i]))
+            hasUppercase = 1;
+        else if (islower(password[i]))
+            hasLowercase = 1;
+        else if (isdigit(password[i]))
+            hasDigit = 1;
+        else
+            hasSpecialChar = 1;
+    }
+
+    return hasUppercase && hasLowercase && hasDigit && hasSpecialChar;
+}
+
+int comparePasswords(const void* a, const void* b) {
+    const PASSWORD* passwordA = (const PASSWORD*)a;
+    const PASSWORD* passwordB = (const PASSWORD*)b;
+    return strcmp(passwordA->username, passwordB->username);
 }
