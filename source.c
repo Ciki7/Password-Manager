@@ -80,7 +80,7 @@ int main() {
                 char username[100];
                 printf("Unesite korisnicko ime: ");
                 scanf("%s", username);
-                findPassUsername(passwords, numPasswords, username);
+                searchPasswords(username);
                 break;
             }
             case 0:
@@ -112,9 +112,13 @@ int main() {
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
             switch (subChoice) {
-            case 1:
-                editPassword(passwords, numPasswords);
+            case 1: {
+                char username[100];
+                printf("Unesite korisnicko ime: ");
+                scanf("%s", username);
+                editPassword("passwords.txt", username);
                 break;
+            }
             case 0:
                 break;
             default:
@@ -128,9 +132,13 @@ int main() {
             printf("Unesite podizbor: ");
             scanf("%d", &subChoice);
             switch (subChoice) {
-            case 1:
-                deletePassword(passwords, &numPasswords);
+            case 1: {
+                char username[100];
+                printf("Unesite korisnicko ime: ");
+                scanf("%s", username);
+                deletePassword(username);
                 break;
+            }
             case 0:
                 break;
             default:
@@ -184,4 +192,6 @@ int main() {
     } while (choice != 0);
 
     return 0;
+
+    
 }
