@@ -114,8 +114,6 @@ int main() {
             switch (subChoice) {
             case 1: {
                 char username[100];
-                printf("Unesite korisnicko ime: ");
-                scanf("%s", username);
                 editPassword("passwords.txt", username);
                 break;
             }
@@ -193,5 +191,5 @@ int main() {
 
     return 0;
 
-    
+
 }
