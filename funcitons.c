@@ -153,7 +153,7 @@ void searchPasswords(const char* username) {
         printf("Nije moguce otvoriti datoteku za citanje.\n");
         return;
     }
-   
+
     PASSWORD password;
     int found = 0;
 
@@ -242,22 +242,31 @@ void requestMasterPassword() {
         char password[MASTER_PASSWORD_LENGTH];
         printf("Ne postoji master sifra. Molimo odaberite master sifru: ");
         fgets(password, sizeof(password), stdin);
-        password[strcspn(password, "\n")] = '\0';  
+        password[strcspn(password, "\n")] = '\0';
         setMasterPassword(password);
         printf("Master sifra uspjesno dodana.\n");
     }
     else {
         char password[MASTER_PASSWORD_LENGTH];
-        printf("Unesite master sifru: ");
-        fgets(password, sizeof(password), stdin);
-        password[strcspn(password, "\n")] = '\0';  
+        int attempts = 3;  
 
-        if (validateMasterPassword(password)) {
-            printf("Pristup odobren.\n");
+        while (attempts > 0) {
+            printf("Unesite master sifru (%d pokusaja): ", attempts);
+            fgets(password, sizeof(password), stdin);
+            password[strcspn(password, "\n")] = '\0';
+
+            if (validateMasterPassword(password)) {
+                printf("Pristup odobren.\n");
+                return;  
+            }
+            else {
+                printf("Pristup odbijen.\n");
+                attempts--;
+            }
         }
-        else {
-            printf("Pristup odbijen.\n");
-        }
+
+        printf("Dostigli ste maksimalan broj pogresnih pokusaja. Izlaz iz aplikacije.\n");
+        exit(1);  
     }
 }
 
@@ -334,7 +343,7 @@ void changeMasterPassword() {
             continue;
         }
 
-        
+
         setMasterPassword(newPassword);
         printf("Master sifra uspjesno promijenjena.\n");
         break;
@@ -354,7 +363,7 @@ void deletePassword(const char* username) {
         return;
     }
 
-    PASSWORD password; 
+    PASSWORD password;
     int found = 0;
 
     while (fscanf(file, "%s %s", password.username, password.password) == 2) {
