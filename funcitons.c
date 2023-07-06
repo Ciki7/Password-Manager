@@ -204,6 +204,8 @@ void editPassword(const char* filename) {
             while (!validPassword) {
                 if (strcmp(newPassword, password.password) == 0) {
                     printf("Nova lozinka ne smije biti ista kao stara lozinka.\n");
+                    printf("Unesite novu lozinku: ");
+                    scanf(" %99s", newPassword);
                 }
                 else if (!validatePassword(newPassword)) {
                     printf("Nova lozinka ne zadovoljava uvjete (malo slovo, veliko slovo, broj, znak). Molimo unesite ponovno: ");
@@ -237,6 +239,7 @@ void editPassword(const char* filename) {
         printf("Sifra s korisnickim imenom '%s' nije pronadena.\n", username);
     }
 }
+
 void requestMasterPassword() {
     if (!isMasterPasswordSet()) {
         char password[MASTER_PASSWORD_LENGTH];
