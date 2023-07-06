@@ -218,8 +218,6 @@ void editPassword(const char* filename) {
 
             fprintf(tempFile, "%s %s\n", password.username, newPassword);
             found = 1;
-
-            free(password.password);
         }
         else {
             fprintf(tempFile, "%s %s\n", password.username, password.password);
